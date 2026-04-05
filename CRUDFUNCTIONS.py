@@ -1,46 +1,71 @@
 
-def Cadastro(cursor,nome,nome_categoria,preco,quantidade):
-    nome = nome.lower()
-    if not nome:
-        return False, "ERRO: É Necessário Digitar Um Nome!"
-            
-    if nome.isdigit() == True:
-        return False,"ERRO: Nome Não Pode Ser Um Número!"
-    resultado = cursor.execute("SELECT NomeProduto FROM Produtos WHERE NomeProduto = %s", (nome,))
-    item = resultado.fetchone()
-    if item is not None:
-        return None,"ERRO: Produto Já Cadastrado!"
-    if not nome_categoria:
-        return False,"ERRO: É Necessário Digitar Uma Categoria!"
-    nome_categoria = nome_categoria.lower()
-    resultado = cursor.execute("SELECT categoriapk FROM Categorias WHERE nomecategoria = %s",(nome_categoria,))
-    chave = resultado.fetchone()
-    if chave is None:
-            return None,"ERRO: Categoria Não Encontrada!"
-    else:
-        valor_chave = chave[0]
-        "SISTEMA: Categoria Encontrada!"
-    try:
-        preco = float(input("Digite O Preço:"))
-        if not preco:
-            return False, "ERRO: É Necessário Digitar Um Preço!"
-        if preco < 0:
-            return False, "ERRO: Preço Não Pode Ser Menor Do Que Zero!"
-        if preco == 0:
-            return False, "ERRO: Preço Não Pode Ser Zero!"
-    except ValueError:
-            return False, "ERRO: Digite Um Caractere Válido!"
-    
-    try:
-        if not quantidade:
-            return False, "ERRO: É Necessário Digitar Uma Quantidade!" 
-        if quantidade < 0:
-            return False, "ERRO: Quantidade Não Pode Ser Menor Que Zero!"
-        if quantidade == 0:
-            return False, "ERRO: Quantidade Inicial Não Pode Ser Zero!"
-    except ValueError:
-            return False, "ERRO: Digite Um Caractere Válido!"
+def Cadastro(cursor):
+    while True:
+        nome = input("Digite O Nome Do Produto:")
+        nome = nome.lower()
+        if not nome:
+            print("ERRO: É Necessário Digitar Um Nome!")
+            continue
+        if nome.isdigit() == True:
+            print("ERRO: Nome Não Pode Ser Um Número!")
+        
+        resultado = cursor.execute("SELECT NomeProduto FROM Produtos WHERE NomeProduto = %s", (nome,))
+        item = resultado.fetchone()
+        if item is not None:
+            print("ERRO: Produto Já Cadastrado!")
+            return None
+        else:
+            print("SISTEMA: Nome Validado!")
+            break
+    while True:
+        nome_categoria = input("Digite A Categoria Do Produto:")
+        if not nome_categoria:
+            print("ERRO: É Necessário Digitar Uma Categoria!")
+            continue
+        nome_categoria = nome_categoria.lower()
+        resultado = cursor.execute("SELECT categoriapk FROM Categorias WHERE nomecategoria = %s",(nome_categoria,))
+        chave = resultado.fetchone()
+        if chave is None:
+            print("ERRO: Categoria Não Encontrada!")
+            return None
+        else:
+            valor_chave = chave[0]
+            print("SISTEMA: Categoria Encontrada!")
+            break 
+    while True:
+        try:
+            preco = float(input("Digite O Preço:"))
+            if not preco:
+                print("ERRO: É Necessário Digitar Um Preço!")
+                continue
+            if preco < 0:
+                print("ERRO: Preço Não Pode Ser Menor Do Que Zero!")
+                continue
+            if preco == 0:
+                print("ERRO: Preço Não Pode Ser Zero!")
+                continue
+            print("SISTEMA: Preço Validado!")
+            break
+        except ValueError:
+            print("ERRO: Digite Um Caractere Válido!")
+    while True:
+        try:
+            quantidade = int(input("Digite A Quantidade Inicial Do Produto:"))
+            if not quantidade:
+                print("ERRO: É Necessário Digitar Uma Quantidade!")
+                continue
+            if quantidade < 0:
+                print("ERRO: Quantidade Não Pode Ser Menor Que Zero!")
+                continue
+            if quantidade == 0:
+                print("ERRO: Quantidade Inicial Não Pode Ser Zero!")
+                continue
+            print("SISTEMA: Quantidade Validada!")
+            break
+        except ValueError:
+            print("ERRO: Digite Um Caractere Válido!")
     cursor.execute("INSERT INTO produtos (nomeproduto, categoriafk, preco, quantidade) VALUES (%s,%s,%s,%s)",(nome,valor_chave,preco,quantidade))
+    
 
     def Cadastro_Categoria(connection,cursor):
         while True:
@@ -112,7 +137,7 @@ def Busca(cursor):
         print("ID:{}\nNome: {}\nCategoria: {}\nChave Da Categoria: {}\nPreço: R${}\nQuantidade: {} Unidades\n".format(id,nome,nome_categoria,categoriaFK,preco,quantidade))
         return None
     
-    def Atualizar(connection,cursor):
+    def Atualizar(cursor):
         while True:
             try:
                 busca = int(input("Digite O ID Do Produto:"))
@@ -165,7 +190,6 @@ def Busca(cursor):
                     continue
                 break
             cursor.execute("UPDATE produtos SET nomeproduto = %s WHERE produtopk = %s",(novo_nome,busca))
-            connection.commit()
             print("Nome Atualizado Com Sucesso!")
         if opcao == 2:
             while True:
@@ -189,7 +213,6 @@ def Busca(cursor):
                 print("ERRO: Categoria Não Existe!")
                 return None
             cursor.execute("UPDATE produtos SET categoriafk = %s WHERE produtopk = %s",(categoriapk,busca))
-            connection.commit()
             print("Categoria Atualizada Com Sucesso!")
         if opcao == 3:
             while True:
@@ -208,10 +231,9 @@ def Busca(cursor):
                 except ValueError:
                     print("ERRO: Digite Um Caractere Válido!")
             cursor.execute("UPDATE produtos SET preco = %s WHERE produtopk = %s",(novo_preco,busca))
-        connection.commit()
         print("Preço Atualizado Com Sucesso!")
 
-def Deletar(connection,cursor):
+def Deletar(cursor):
     while True:
         try:
             busca = int(input("Digite O ID Do Produto:"))
@@ -248,6 +270,5 @@ def Deletar(connection,cursor):
         break
     if confirmacao == 'y':
         cursor.execute("DELETE FROM produtos WHERE produtopk = %s",(busca,))
-        connection.commit()
         print("Produto Deletado Com Sucesso!")
     
