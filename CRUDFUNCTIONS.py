@@ -67,7 +67,7 @@ def Cadastro(cursor):
     cursor.execute("INSERT INTO produtos (nomeproduto, categoriafk, preco, quantidade) VALUES (%s,%s,%s,%s)",(nome,valor_chave,preco,quantidade))
     
 
-    def Cadastro_Categoria(cursor):
+def Cadastro_Categoria(cursor):
         while True:
             nome_categoria = input("Digite O Nome De Registro Da Categoria:")
             if not nome_categoria:
@@ -136,101 +136,101 @@ def Busca(cursor):
         print("ID:{}\nNome: {}\nCategoria: {}\nChave Da Categoria: {}\nPreço: R${}\nQuantidade: {} Unidades\n".format(id,nome,nome_categoria,categoriaFK,preco,quantidade))
         return None
     
-    def Atualizar(cursor):
+def Atualizar(cursor):
+    while True:
+        try:
+            busca = int(input("Digite O ID Do Produto:"))
+            if not busca:
+                print("ERRO: É Necessário Digitar Um ID!")
+                continue
+            if busca < 1:
+                print("ERRO: ID Inválido, Valor Inicial a partir de 1.")
+                continue
+            break
+        except ValueError:
+            print("ERRO: Digite Um Caractere Válido!")
+    select1 = cursor.execute("SELECT * FROM produtos WHERE produtopk = %s",(busca,))
+    resultado1 = select1.fetchone()
+    if resultado1 is None:
+        print("ERRO: Produto Não Encontrado!")
+        return None
+    id,nome,categoriaFK,preco,quantidade = resultado1
+    select2 = cursor.execute("SELECT nomecategoria FROM categorias WHERE categoriapk = %s",(categoriaFK,))
+    resultado2 = select2.fetchone()
+    for item in resultado2:
+        nome_categoria = item
+    print("Produto Selecionado:")
+    print("ID:{}\nNome: {}\nCategoria: {}\nChave Da Categoria: {}\nPreço: R${}\nQuantidade: {} Unidades\n".format(id,nome,nome_categoria,categoriaFK,preco,quantidade))
+    print("1 - Nome | 2 - Categoria | 3 - Preço ")
+    while True:
+        try:
+            opcao = int(input("Digite A Opção:"))
+            if not opcao:
+                print("ERRO: É Necessário Digitar Uma Opção!")
+                continue
+            if opcao not in [1,2,3]:
+                print("ERRO: Digite Uma Opção Válida!")
+                continue
+            break
+        except ValueError:
+            print("ERRO: Digite Um Caractere Válido!")
+    if opcao == 1:
         while True:
-            try:
-                busca = int(input("Digite O ID Do Produto:"))
-                if not busca:
-                    print("ERRO: É Necessário Digitar Um ID!")
-                    continue
-                if busca < 1:
-                    print("ERRO: ID Inválido, Valor Inicial a partir de 1.")
-                    continue
-                break
-            except ValueError:
-                print("ERRO: Digite Um Caractere Válido!")
-        select1 = cursor.execute("SELECT * FROM produtos WHERE produtopk = %s",(busca,))
-        resultado1 = select1.fetchone()
-        if resultado1 is None:
-            print("ERRO: Produto Não Encontrado!")
+            novo_nome = input("Digite O Novo Nome:")
+            novo_nome = novo_nome.lower()
+            if not novo_nome:
+                print("ERRO: É Necessário Digitar Um Nome!")
+                continue
+            if novo_nome.isdigit():
+                print("ERRO: Nome Não Pode Ser Um Número!")
+                continue
+            if novo_nome == nome:
+                print("ERRO: Novo Nome Não Pode Ser O Nome Atual!")
+                continue
+            break
+        cursor.execute("UPDATE produtos SET nomeproduto = %s WHERE produtopk = %s",(novo_nome,busca))
+        print("Nome Atualizado Com Sucesso!")
+    if opcao == 2:
+        while True:
+            nova_categoria = input("Digite A Nova Categoria:")
+            nova_categoria = nova_categoria.lower()
+            if not nova_categoria:
+                print("ERRO: É Necessário Digitar Uma Categoria!")
+                continue
+            if nova_categoria.isdigit():
+                print("ERRO: Categoria Não Pode Ser Um Número!")
+                continue
+            if nova_categoria == nome_categoria:
+                print("ERRO: Nova Categoria Não Pode Ser A Categoria Atual!")
+                continue
+            break
+        select3 = cursor.execute("SELECT categoriapk FROM categorias WHERE nomecategoria = %s",(nova_categoria,))
+        resultado3 = select3.fetchone()
+        for categoriapk in resultado3:
+            pass
+        if resultado3 is None:
+            print("ERRO: Categoria Não Existe!")
             return None
-        id,nome,categoriaFK,preco,quantidade = resultado1
-        select2 = cursor.execute("SELECT nomecategoria FROM categorias WHERE categoriapk = %s",(categoriaFK,))
-        resultado2 = select2.fetchone()
-        for item in resultado2:
-            nome_categoria = item
-        print("Produto Selecionado:")
-        print("ID:{}\nNome: {}\nCategoria: {}\nChave Da Categoria: {}\nPreço: R${}\nQuantidade: {} Unidades\n".format(id,nome,nome_categoria,categoriaFK,preco,quantidade))
-        print("1 - Nome | 2 - Categoria | 3 - Preço ")
-        while True:
+        cursor.execute("UPDATE produtos SET categoriafk = %s WHERE produtopk = %s",(categoriapk,busca))
+        print("Categoria Atualizada Com Sucesso!")
+    if opcao == 3:
+         while True:
             try:
-                opcao = int(input("Digite A Opção:"))
-                if not opcao:
-                    print("ERRO: É Necessário Digitar Uma Opção!")
+                novo_preco = float(input("Digite O Novo Preço:"))
+                if not novo_preco:
+                    print("ERRO: É Necessário Digitar Um Preço!")
                     continue
-                if opcao not in [1,2,3]:
-                    print("ERRO: Digite Uma Opção Válida!")
+                if novo_preco <= 0:
+                    print("ERRO: Novo Nome Não Pode Ser Menor Ou Igual A Zero!")
+                    continue
+                if novo_preco == preco:
+                    print("ERRO: Novo Preço Não Pode Ser O Mesmo Que O Atual!")
                     continue
                 break
             except ValueError:
                 print("ERRO: Digite Um Caractere Válido!")
-        if opcao == 1:
-            while True:
-                novo_nome = input("Digite O Novo Nome:")
-                novo_nome = novo_nome.lower()
-                if not novo_nome:
-                    print("ERRO: É Necessário Digitar Um Nome!")
-                    continue
-                if novo_nome.isdigit():
-                    print("ERRO: Nome Não Pode Ser Um Número!")
-                    continue
-                if novo_nome == nome:
-                    print("ERRO: Novo Nome Não Pode Ser O Nome Atual!")
-                    continue
-                break
-            cursor.execute("UPDATE produtos SET nomeproduto = %s WHERE produtopk = %s",(novo_nome,busca))
-            print("Nome Atualizado Com Sucesso!")
-        if opcao == 2:
-            while True:
-                nova_categoria = input("Digite A Nova Categoria:")
-                nova_categoria = nova_categoria.lower()
-                if not nova_categoria:
-                    print("ERRO: É Necessário Digitar Uma Categoria!")
-                    continue
-                if nova_categoria.isdigit():
-                    print("ERRO: Categoria Não Pode Ser Um Número!")
-                    continue
-                if nova_categoria == nome_categoria:
-                    print("ERRO: Nova Categoria Não Pode Ser A Categoria Atual!")
-                    continue
-                break
-            select3 = cursor.execute("SELECT categoriapk FROM categorias WHERE nomecategoria = %s",(nova_categoria,))
-            resultado3 = select3.fetchone()
-            for categoriapk in resultado3:
-                pass
-            if resultado3 is None:
-                print("ERRO: Categoria Não Existe!")
-                return None
-            cursor.execute("UPDATE produtos SET categoriafk = %s WHERE produtopk = %s",(categoriapk,busca))
-            print("Categoria Atualizada Com Sucesso!")
-        if opcao == 3:
-            while True:
-                try:
-                    novo_preco = float(input("Digite O Novo Preço:"))
-                    if not novo_preco:
-                        print("ERRO: É Necessário Digitar Um Preço!")
-                        continue
-                    if novo_preco <= 0:
-                        print("ERRO: Novo Nome Não Pode Ser Menor Ou Igual A Zero!")
-                        continue
-                    if novo_preco == preco:
-                        print("ERRO: Novo Preço Não Pode Ser O Mesmo Que O Atual!")
-                        continue
-                    break
-                except ValueError:
-                    print("ERRO: Digite Um Caractere Válido!")
             cursor.execute("UPDATE produtos SET preco = %s WHERE produtopk = %s",(novo_preco,busca))
-        print("Preço Atualizado Com Sucesso!")
+            print("Preço Atualizado Com Sucesso!")
 
 def Deletar(cursor):
     while True:
