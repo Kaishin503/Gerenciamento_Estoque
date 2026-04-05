@@ -67,7 +67,7 @@ def Cadastro(cursor):
     cursor.execute("INSERT INTO produtos (nomeproduto, categoriafk, preco, quantidade) VALUES (%s,%s,%s,%s)",(nome,valor_chave,preco,quantidade))
     
 
-    def Cadastro_Categoria(connection,cursor):
+    def Cadastro_Categoria(cursor):
         while True:
             nome_categoria = input("Digite O Nome De Registro Da Categoria:")
             if not nome_categoria:
@@ -81,7 +81,6 @@ def Cadastro(cursor):
                 return None
             else:
                 cursor.execute("INSERT INTO Categorias (NomeCategoria) VALUES (%s)",(nome_categoria,))
-                connection.commit()
                 print("SISTEMA: Categoria Cadastrada!")
                 break
 
