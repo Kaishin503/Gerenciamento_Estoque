@@ -9,7 +9,7 @@ def Cadastro(cursor):
         if nome.isdigit() == True:
             print("ERRO: Nome Não Pode Ser Um Número!")
         
-        resultado = cursor.execute("SELECT NomeProduto FROM Produtos WHERE NomeProduto = ?", (nome,))
+        resultado = cursor.execute("SELECT ProductName FROM Products WHERE ProductName = ?", (nome,))
         item = resultado.fetchone()
         if item is not None:
             print("ERRO: Produto Já Cadastrado!")
@@ -23,7 +23,7 @@ def Cadastro(cursor):
             print("ERRO: É Necessário Digitar Uma Categoria!")
             continue
         nome_categoria = nome_categoria.lower()
-        resultado = cursor.execute("SELECT categoriapk FROM Categorias WHERE nomecategoria = ?",(nome_categoria,))
+        resultado = cursor.execute("SELECT CategoryPK FROM ProductCategory WHERE CategoryName = ?",(nome_categoria,))
         chave = resultado.fetchone()
         if chave is None:
             print("ERRO: Categoria Não Encontrada!")
@@ -64,7 +64,7 @@ def Cadastro(cursor):
             break
         except ValueError:
             print("ERRO: Digite Um Caractere Válido!")
-    cursor.execute("INSERT INTO produtos (nomeproduto, categoriafk, preco, quantidade) VALUES (?,?,?,?)",(nome,valor_chave,preco,quantidade))
+    cursor.execute("INSERT INTO Products (ProductName, CategoryFK, ProductPrice, ProductQuantity) VALUES (?,?,?,?)",(nome,valor_chave,preco,quantidade))
     
 
 def Cadastro_Categoria(cursor):
@@ -74,13 +74,13 @@ def Cadastro_Categoria(cursor):
                 print("ERRO: É Necessário Digitar Um Nome!")
                 continue
             nome_categoria = nome_categoria.lower()
-            resultado = cursor.execute("SELECT CategoriaPK FROM Categorias WHERE NomeCategoria = ?",(nome_categoria,))
+            resultado = cursor.execute("SELECT CategoryPK FROM ProductCategory WHERE CategoryName = ?",(nome_categoria,))
             nome = resultado.fetchone()
             if nome is not None:
                 print("ERRO: Categoria Já Existe!")
                 return None
             else:
-                cursor.execute("INSERT INTO Categorias (NomeCategoria) VALUES (?)",(nome_categoria,))
+                cursor.execute("INSERT INTO ProductCategory (CategoryName) VALUES (?)",(nome_categoria,))
                 print("SISTEMA: Categoria Cadastrada!")
                 break
 
@@ -89,7 +89,7 @@ def Listagem(cursor):
     resultado = produtos.fetchall()
     for item in resultado:
         id,nome,categoriaFK,preco,quantidade = item
-        categoria = cursor.execute("SELECT NomeCategoria FROM Categorias WHERE CategoriaPK = ?",(categoriaFK,))
+        categoria = cursor.execute("SELECT CategoryName FROM ProductCategory WHERE CategoryPK = ?",(categoriaFK,))
     resultado_categoria = categoria.fetchone()
     for item in resultado_categoria:
         nome_categoria = item
@@ -113,11 +113,11 @@ def Busca(cursor):
             print("ERRO: Digite Um Caractere Válido!")
     if opcao == 1:
         entrada = input("Digite O ID:")
-        busca = cursor.execute("SELECT * FROM Produtos WHERE ProdutoPK = ?",(entrada,))
+        busca = cursor.execute("SELECT * FROM Products WHERE ProductPK = ?",(entrada,))
         resultado = busca.fetchall()
         for item in resultado:
             id,nome,categoriaFK,preco,quantidade = item
-        categoria = cursor.execute("SELECT NomeCategoria FROM Categorias WHERE CategoriaPK = ?",(categoriaFK,))
+        categoria = cursor.execute("SELECT CategoryName FROM ProductCategory WHERE CategoryPK = ?",(categoriaFK,))
         resultado2 = categoria.fetchone()
         for item in resultado2:
             nome_categoria = item
@@ -125,11 +125,11 @@ def Busca(cursor):
         return None
     elif opcao == 2:
         entrada = input("Digite O Nome:")
-        busca = cursor.execute("SELECT * FROM Produtos WHERE NomeProduto = ?",(entrada,))
+        busca = cursor.execute("SELECT * FROM Products WHERE ProductName = ?",(entrada,))
         resultado = busca.fetchall()
         for item in resultado:
             id,nome,categoriaFK,preco,quantidade = item
-        categoria = cursor.execute("SELECT NomeCategoria FROM Categorias WHERE CategoriaPK = ?",(categoriaFK,))
+        categoria = cursor.execute("SELECT CategoryName FROM ProductCategory WHERE CategoryPK = ?",(categoriaFK,))
         resultado2 = categoria.fetchone()
         for item in resultado2:
             nome_categoria = item
@@ -149,13 +149,13 @@ def Atualizar(cursor):
             break
         except ValueError:
             print("ERRO: Digite Um Caractere Válido!")
-    select1 = cursor.execute("SELECT * FROM produtos WHERE produtopk = ?",(busca,))
+    select1 = cursor.execute("SELECT * FROM Products WHERE ProductPK = ?",(busca,))
     resultado1 = select1.fetchone()
     if resultado1 is None:
         print("ERRO: Produto Não Encontrado!")
         return None
     id,nome,categoriaFK,preco,quantidade = resultado1
-    select2 = cursor.execute("SELECT nomecategoria FROM categorias WHERE categoriapk = ?",(categoriaFK,))
+    select2 = cursor.execute("SELECT CategoryName FROM ProductCategory WHERE CategoryPK = ?",(categoriaFK,))
     resultado2 = select2.fetchone()
     for item in resultado2:
         nome_categoria = item
@@ -188,7 +188,7 @@ def Atualizar(cursor):
                 print("ERRO: Novo Nome Não Pode Ser O Nome Atual!")
                 continue
             break
-        cursor.execute("UPDATE produtos SET nomeproduto = ? WHERE produtopk = ?",(novo_nome,busca))
+        cursor.execute("UPDATE Products SET ProductName = ? WHERE ProductPK = ?",(novo_nome,busca))
         print("Nome Atualizado Com Sucesso!")
     if opcao == 2:
         while True:
@@ -204,14 +204,14 @@ def Atualizar(cursor):
                 print("ERRO: Nova Categoria Não Pode Ser A Categoria Atual!")
                 continue
             break
-        select3 = cursor.execute("SELECT categoriapk FROM categorias WHERE nomecategoria = ?",(nova_categoria,))
+        select3 = cursor.execute("SELECT CategoryPK FROM ProductCategory WHERE CategoryName = ?",(nova_categoria,))
         resultado3 = select3.fetchone()
         for categoriapk in resultado3:
             pass
         if resultado3 is None:
             print("ERRO: Categoria Não Existe!")
             return None
-        cursor.execute("UPDATE produtos SET categoriafk = ? WHERE produtopk = ?",(categoriapk,busca))
+        cursor.execute("UPDATE Products SET CategoryFK = ? WHERE ProductPK = ?",(categoriapk,busca))
         print("Categoria Atualizada Com Sucesso!")
     if opcao == 3:
          while True:
@@ -229,7 +229,7 @@ def Atualizar(cursor):
                 break
             except ValueError:
                 print("ERRO: Digite Um Caractere Válido!")
-            cursor.execute("UPDATE produtos SET preco = ? WHERE produtopk = ?",(novo_preco,busca))
+            cursor.execute("UPDATE Products SET ProductPrice = ? WHERE ProductPK = ?",(novo_preco,busca))
             print("Preço Atualizado Com Sucesso!")
 
 def Deletar(cursor):
@@ -245,13 +245,13 @@ def Deletar(cursor):
             break
         except:
             print("ERRO: Digite Um Caractere Válido!")
-    select1 = cursor.execute("SELECT * FROM produtos WHERE produtopk = ?",(busca,))
+    select1 = cursor.execute("SELECT * FROM Products WHERE ProductPK = ?",(busca,))
     resultado = select1.fetchone()
     if resultado is None:
         print("ERRO: Produto Não Encontrado!")
         return None
     id,nome,categoriafk,preco,quantidade = resultado
-    select2 = cursor.execute("SELECT nomecategoria FROM categorias WHERE categoriapk = ?",(categoriafk,))
+    select2 = cursor.execute("SELECT CategoryName FROM ProductCategory WHERE CategoryPK = ?",(categoriafk,))
     resultado = select2.fetchone()
     for categoria in resultado:
         print(categoria)
@@ -268,6 +268,6 @@ def Deletar(cursor):
             continue
         break
     if confirmacao == 'y':
-        cursor.execute("DELETE FROM produtos WHERE produtopk = ?",(busca,))
+        cursor.execute("DELETE FROM Products WHERE ProductPK = ?",(busca,))
         print("Produto Deletado Com Sucesso!")
     
