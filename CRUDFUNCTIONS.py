@@ -85,7 +85,7 @@ def Cadastro_Categoria(cursor):
                 break
 
 def Listagem(cursor):
-    produtos = cursor.execute("SELECT * FROM Produtos")
+    produtos = cursor.execute("SELECT * FROM Products")
     resultado = produtos.fetchall()
     for item in resultado:
         id,nome,categoriaFK,preco,quantidade = item
