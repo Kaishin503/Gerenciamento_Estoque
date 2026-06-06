@@ -28,6 +28,7 @@ def create_category(cursor,category_name):
         cursor.execute("INSERT INTO ProductCategory (CategoryName) VALUES (?)",(category_name,))
         return (f"Created Category {category_name}!")
 
+
          
 def list_products(cursor):
     products = cursor.execute("SELECT * FROM Products")
@@ -41,6 +42,8 @@ def list_products(cursor):
         product_list.append({"ID":id,"NAME":name,"CATEGORY_NAME":category_name,"CATEGORY_ID":categoryFK,"PRICE":price,"STOCK":stock})
     return product_list
 
+
+
 def list_categories(cursor):
     products = cursor.execute("SELECT * FROM ProductCategory")
     fetch = products.fetchall()
@@ -49,6 +52,8 @@ def list_categories(cursor):
         id,category_name = item
         product_list.append({"ID":id,"CATEGORY_NAME":category_name})
     return product_list
+
+
 
 def search_product(cursor,id_or_name):
     try:
@@ -114,6 +119,9 @@ def update_product(cursor,id,name=None,category=None,price=None):
     if info_list.get("PRICE"):
         cursor.execute("UPDATE Products SET ProductPrice = ? WHERE ProductPK = ?",(info_list["PRICE"],id))
     return "Product Updated Successfully."
+
+
+
 def delete_product(cursor,id):
     search = cursor.execute("SELECT * FROM Products WHERE ProductPK = ?",(id,))
     product = search.fetchone()
@@ -121,3 +129,13 @@ def delete_product(cursor,id):
         raise ValueError("ERROR: Product Does Not Exist!")
     cursor.execute("DELETE FROM Products WHERE ProductPK = ?",(id,))
     return "Product Successfully Deleted."
+
+
+
+def delete_category(cursor,id):
+    search = cursor.execute("SELECT * FROM ProductCategory WHERE CategoryPK = ?",(id,))
+    product = search.fetchone()
+    if product is None:
+        raise ValueError("ERROR: Category Does Not Exist!")
+    cursor.execute("DELETE FROM ProductCategory WHERE CategoryPK = ?",(id,))
+    return "Category Successfully Deleted."
