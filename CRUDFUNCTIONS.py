@@ -85,9 +85,13 @@ def update_product(cursor,id,name=None,category=None,price=None):
     if id is None:
         raise ValueError("ERROR: You Must Insert An ID!")
     product = cursor.execute("SELECT * FROM Products WHERE ProductPK = ?",(id,))
-    if product.fetchall() is None:
+    if product.fetchone() is None:
         raise ValueError("ERROR: Product Does Not Exist!")
     if name is not None:
+        name_verification = cursor.execute("SELECT ProductName FROM Products WHERE ProductName = ?",(name,))
+        results = name_verification.fetchone()
+        if results is not None:
+            raise ValueError(f"ERROR: Product {results[0]} Already Exists!")
         name = name.lower()
         info_list.update({"NAME":name})
     if category is not None:
@@ -98,17 +102,17 @@ def update_product(cursor,id,name=None,category=None,price=None):
             info_list.update({"CATEGORY":category_verification.fetchone()})
     if price is not None:
         if price <= 0:
-            raise ValueError("ERROR: Price Cannot Be Lower Than 0")
+            raise ValueError("ERROR: Price Cannot Be Lower Than/Equal To 0")
         else:
             info_list.update({"PRICE":price})
     if name == None and category == None and price == None:
         raise ValueError("ERROR: You Must Give At Least One Argument To Update!")
-    if info_list["NAME"]:
+    if info_list.get("NAME"):
         cursor.execute("UPDATE Products SET ProductName = ? WHERE ProductPK = ?",(info_list["NAME"],id))
-    if info_list["CATEGORY"]:
-        cursor.execute("UPDATE Products SET CategoryFK = ? WHERE ProductPK = ?",(info_list["CATEGORY"],id))
-    if info_list["PRICE"]:
-        cursor.execute("UPDATE Products SET ProductPrice = ? WHERE ProductPK = ?",info_list["PRICE"],id)
+    if info_list.get("CATEGORY"):
+        cursor.execute("UPDATE Products SET CategoryFK = ? WHERE ProductPK = ?",(category,id))
+    if info_list.get("PRICE"):
+        cursor.execute("UPDATE Products SET ProductPrice = ? WHERE ProductPK = ?",(info_list["PRICE"],id))
     return "Product Updated Successfully."
 def delete_product(cursor,id):
     search = cursor.execute("SELECT * FROM Products WHERE ProductPK = ?",(id,))
