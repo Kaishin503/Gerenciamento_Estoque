@@ -14,7 +14,7 @@ def create_product(cursor,name,category,price,stock):
         raise ValueError("ERROR: Price Cannot Be Less Than/Equal to 0!")
     if stock <= 0:
         raise ValueError("ERROR: Stock Cannot Be Less Than/Equal to 0!")
-    cursor.execute("INSERT INTO Products (ProductName,CategoryFK,ProductPrice,ProductQuantity) VALUES (?,?,?,?)",(name,categoryFK,price,stock))
+    cursor.execute("INSERT INTO Products (ProductName,CategoryFK,ProductPrice,ProductStock) VALUES (?,?,?,?)",(name,categoryFK,price,stock))
     return "Product Successfully Created."
     
     
@@ -139,3 +139,36 @@ def delete_category(cursor,id):
         raise ValueError("ERROR: Category Does Not Exist!")
     cursor.execute("DELETE FROM ProductCategory WHERE CategoryPK = ?",(id,))
     return "Category Successfully Deleted."
+
+def stock_in(cursor,id,amount):
+    search = cursor.execute("SELECT ProductStock FROM Products WHERE ProductPK = ?",(id,))
+    fetch = search.fetchone()
+    if fetch is None:
+        raise ValueError("ERROR: Product Does Not Exist!")
+    if amount <= 0:
+        raise ValueError("ERROR: Stock-in Cannot Be Lower Than/Equal To 0!")
+    current_stock = fetch[0]
+    new_stock = current_stock + amount
+    cursor.execute("UPDATE Products SET ProductStock = ? WHERE ProductPK = ?",(new_stock,id))
+    return "Stock-In Registered."
+
+
+
+def stock_out(cursor,id,amount):
+    search = cursor.execute("SELECT ProductStock FROM Products WHERE ProductPK = ?",(id,))
+    fetch = search.fetchone()
+    if fetch == None:
+        raise ValueError("ERROR: Product Does Not Exist!")
+    if amount == 0: 
+        raise ValueError("ERROR: Quantity Added Cannot Be 0!")
+    if amount > 0:
+        current_stock = fetch[0]
+        new_stock = current_stock - amount
+        cursor.execute("UPDATE Products SET ProductStock = ? WHERE ProductPK = ?",(new_stock,id))
+        return "Stock-Out Registered."
+    if amount < 0:
+        current_stock = fetch[0]
+        new_stock = current_stock + amount
+        cursor.execute("UPDATE Products SET ProductStock = ? WHERE ProductPK = ?",(new_stock,id))
+        return "Stock-Out Registered."
+    
