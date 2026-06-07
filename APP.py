@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 import pyodbc
 import os
 from dotenv import load_dotenv
-from CRUDFUNCTIONS import create_product,create_category,list_products,search_product,update_product,delete_product
+from CRUDFUNCTIONS import create_product,create_category,list_products,list_categories,search_product,update_product,delete_product,delete_category,stock_in,stock_out
 load_dotenv()
 
 def get_connection():
@@ -15,11 +15,13 @@ def get_connection():
     "Trusted_Connection=yes;")
 
 
+
 app = Flask(__name__)
 CORS(app)
 
+
 @app.route("/products",methods=["GET","POST"])
-def products():
+def product_search_list_and_create():
     conn = get_connection()
     cursor = conn.cursor()
     if request.method == "GET":
@@ -40,15 +42,21 @@ def products():
             return jsonify({"MESSAGE":product_creation}),201
         except ValueError as err:
             return jsonify({"ERROR_MESSAGE":str(err)}),400
-        
+
+
+
 @app.route("/products/<int:id>",methods=["PUT","DELETE"])
-def product(id):
+def product_update_and_delete(id):
     conn = get_connection()
     cursor = conn.cursor()
     if request.method == "PUT":
+
         data = request.get_json()
         try:
-            product_update = update_product(cursor,id,name=data["NAME"],category=data["CATEGORY"],price=data["PRICE"])
+            name = data.get("NAME")
+            category = data.get("CATEGORY")
+            price = data.get("PRICE")
+            product_update = update_product(cursor,id,name=name,category=category,price=price)
             conn.commit()
             return jsonify({"MESSAGE":product_update}),200
         except ValueError as err:
@@ -61,17 +69,58 @@ def product(id):
         except ValueError as err:
             return jsonify({"ERROR_MESSAGE":str(err)}),400
 
-@app.route("/categories",methods=["POST"])
-def categories():
+
+
+@app.route("/categories",methods=["GET","POST"])
+def category_creation_and_deletion():
     conn = get_connection()
     cursor = conn.cursor()
-    dados = request.get_json()
+    if request.method == "GET":
+        category_list = list_categories(cursor)
+        return jsonify(category_list)
+    if request.methods == "POST":
+        try:
+            dados = request.get_json()
+            category_creation = create_category(cursor,dados["NAME"])
+            conn.commit()
+            return jsonify({"MESSAGE":category_creation}),201
+        except ValueError as err:
+            return jsonify({"ERROR_MESSAGE":str(err)}),400
+
+
+
+@app.route("/categories/<int:id>",methods=["DELETE"])
+def category_deletion(id):
+    conn = get_connection()
+    cursor = conn.cursor()
     try:
-        category_creation = create_category(cursor,dados["CATEGORY_NAME"])
+        category_deletion = delete_category(cursor,id)
         conn.commit()
-        return jsonify({"MESSAGE":category_creation}),201
+        return jsonify({"MESSAGE":category_deletion}),200
     except ValueError as err:
         return jsonify({"ERROR_MESSAGE":str(err)}),400
 
+@app.route("/products/<int:id>/transactions",methods=["PUT"]) 
+def transactions(id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    data = request.get_json()
+    type = data.get("TRANSACTION")
+    if type == "stock_in":
+        amount = data.get("AMOUNT")
+        try:
+            transaction = stock_in(cursor,id,amount)
+            conn.commit()
+            return jsonify({"MESSAGE":transaction}),200
+        except ValueError as err:
+            return jsonify({"ERROR_MESSAGE":str(err)}),400
+    if type == "stock_out":
+        amount = data.get("AMOUNT")
+        try:
+            transaction = stock_out(cursor,id,amount)
+            conn.commit()
+            return jsonify({"MESSAGE":transaction}),200
+        except ValueError as err:
+            return jsonify({"ERROR_MESSAGE":str(err)}),400
 if __name__ == "__main__":
     app.run(debug=True)
