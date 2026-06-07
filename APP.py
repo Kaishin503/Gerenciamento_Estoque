@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 import pyodbc
 import os
 from dotenv import load_dotenv
-from CRUDFUNCTIONS import create_product,create_category,list_products,list_categories,search_product,update_product,delete_product,delete_category,stock_in,stock_out
+from CRUDFUNCTIONS import create_product,create_category,list_products,list_categories,search_product,update_product,delete_product,delete_category,stock_in,stock_out,stock_log
 load_dotenv()
 
 def get_connection():
@@ -110,17 +110,20 @@ def transactions(id):
         amount = data.get("AMOUNT")
         try:
             transaction = stock_in(cursor,id,amount)
+            log_transaction = stock_log(cursor,id,amount,type)
             conn.commit()
-            return jsonify({"MESSAGE":transaction}),200
+            return jsonify([{"MESSAGE":transaction},{"MESSAGE":log_transaction}]),200
         except ValueError as err:
             return jsonify({"ERROR_MESSAGE":str(err)}),400
     if type == "stock_out":
         amount = data.get("AMOUNT")
         try:
             transaction = stock_out(cursor,id,amount)
+            log_transaction = stock_log(cursor,id,amount,type)
             conn.commit()
-            return jsonify({"MESSAGE":transaction}),200
+            return jsonify([{"MESSAGE":transaction},{"MESSAGE":log_transaction}]),200
         except ValueError as err:
             return jsonify({"ERROR_MESSAGE":str(err)}),400
+
 if __name__ == "__main__":
     app.run(debug=True)
