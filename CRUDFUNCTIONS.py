@@ -172,3 +172,12 @@ def stock_out(cursor,id,amount):
         cursor.execute("UPDATE Products SET ProductStock = ? WHERE ProductPK = ?",(new_stock,id))
         return "Stock-Out Registered."
     
+def stock_log(cursor,id,amount,type):
+    search = cursor.execute("SELECT ProductName FROM Products WHERE ProductPK = ?",(id,))
+    fetch = search.fetchone()
+    if fetch is None:
+        raise ValueError("ERROR: Product Does Not Exist!")
+    product_name = fetch[0]
+    cursor.execute("INSERT INTO StockLog (ProductName,ProductFK,Amount,MovimentationType) VALUES (?,?,?,?)",(product_name,id,amount,type))
+    return ("Log Successfully Updated.")
+        
