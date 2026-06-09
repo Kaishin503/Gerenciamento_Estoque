@@ -15,7 +15,9 @@ def create_product(cursor,name,category,price,stock):
     if stock <= 0:
         raise ValueError("ERROR: Stock Cannot Be Less Than/Equal to 0!")
     cursor.execute("INSERT INTO Products (ProductName,CategoryFK,ProductPrice,ProductStock) VALUES (?,?,?,?)",(name,categoryFK,price,stock))
-    return "Product Successfully Created."
+    search = cursor.execute("SELECT ProductPK FROM Products WHERE ProductName = ?",(name,))
+    fetch = search.fetchone()
+    return [{"MESSAGE":"Product Successfully Created. "},{"ID":fetch[0]}]
     
     
 
@@ -26,7 +28,10 @@ def create_category(cursor,category_name):
         raise ValueError("ERROR: Category Already Exists!")
     else:
         cursor.execute("INSERT INTO ProductCategory (CategoryName) VALUES (?)",(category_name,))
-        return (f"Created Category {category_name}!")
+        search = cursor.execute("SELECT CategoryPK FROM ProductCategory WHERE CategoryName = ?",(category_name,))
+        fetch = search.fetchone()
+        category_id = fetch[0]
+        return ([{"MESSAGE":f"Created Category {category_name}!"},{"CATEGORY_ID":category_id}])
 
 
          
@@ -123,11 +128,11 @@ def update_product(cursor,id,name=None,category=None,price=None):
 
 
 def delete_product(cursor,id):
-    search = cursor.execute("SELECT * FROM Products WHERE ProductPK = ?",(id,))
+    search = cursor.execute("SELECT * FROM Products WHERE ProductPK = ?", (id,))
     product = search.fetchone()
     if product is None:
         raise ValueError("ERROR: Product Does Not Exist!")
-    cursor.execute("DELETE FROM Products WHERE ProductPK = ?",(id,))
+    cursor.execute("DELETE FROM Products WHERE ProductPK = ?", (id,))
     return "Product Successfully Deleted."
 
 
@@ -179,5 +184,28 @@ def stock_log(cursor,id,amount,type):
         raise ValueError("ERROR: Product Does Not Exist!")
     product_name = fetch[0]
     cursor.execute("INSERT INTO StockLog (ProductName,ProductFK,Amount,MovimentationType) VALUES (?,?,?,?)",(product_name,id,amount,type))
-    return ("Log Successfully Updated.")
+    return ("Stock Log Successfully Updated.")
         
+def system_log(cursor,entity,entity_name,id,operation_type):
+    if entity is None:
+        raise ValueError("ERROR: Entity Must Be Specified!")
+    cursor.execute("INSERT INTO SystemLog (Entity,EntityName,EntityID,OperationType) VALUES (?,?,?,?)",(entity,entity_name,id,operation_type))
+    return ("System Log Successfully Updated.")
+
+def view_system_log(cursor):
+    system_log = cursor.execute("SELECT * FROM SystemLog")
+    fetch = system_log.fetchall()
+    product_list = []
+    for item in fetch:
+        id,entity,entity_name,entity_id,operation_type,date = item
+        product_list.append({"ID":id,"ENTITY":entity,"ENTITY_NAME":entity_name,"ENTITY_ID":entity_id,"OPERATION_TYPE":operation_type,"DATE":date})
+    return product_list
+
+def view_stock_log(cursor):
+    stock_log = cursor.execute("SELECT * FROM StockLog")
+    fetch = stock_log.fetchall()
+    product_list = []
+    for item in fetch:
+        id,name,productFK,amount,movimentation_type,date = item
+    product_list.append({"ID":id,"NAME":name,"PRODUCT_ID":productFK,"AMOUNT":amount,"MOVIMENTATION_TYPE":movimentation_type,"OPERATION_DATE":str(date)})
+    return product_list
