@@ -112,10 +112,11 @@ def update_product(cursor,id,name=None,category=None,price=None):
         info_list.update({"NAME":name})
     if category is not None:
         category_verification = cursor.execute("SELECT CategoryPK FROM ProductCategory WHERE CategoryName = ?",(category.lower(),))
-        if category_verification.fetchone() == None:
+        fetch = category_verification.fetchone()
+        if fetch == None:
             raise ValueError("CATEGORY DOES NOT EXIST")
         else:
-            info_list.update({"CATEGORY":category_verification.fetchone()})
+            info_list.update({"CATEGORY":fetch[0]})
     if price is not None:
         if price <= 0:
             raise ValueError("PRICE CANNNOT BE LOWER THAN/EQUAL TO 0")
@@ -127,6 +128,7 @@ def update_product(cursor,id,name=None,category=None,price=None):
         info_list["NAME"] = info_list["NAME"].upper()
         cursor.execute("UPDATE Products SET ProductName = ? WHERE ProductPK = ?",(info_list["NAME"],id))
     if info_list.get("CATEGORY"):
+        category = info_list.get("CATEGORY")
         cursor.execute("UPDATE Products SET CategoryFK = ? WHERE ProductPK = ?",(category,id))
     if info_list.get("PRICE"):
         cursor.execute("UPDATE Products SET ProductPrice = ? WHERE ProductPK = ?",(info_list["PRICE"],id))
@@ -181,12 +183,8 @@ def stock_out(cursor,id,amount):
         cursor.execute("UPDATE Products SET ProductStock = ? WHERE ProductPK = ?",(new_stock,id))
         return "STOCK-OUT REGISTERED"
     if amount < 0:
-        current_stock = fetch[0]
-        new_stock = current_stock + amount
-        if new_stock < 0:
-            raise ValueError("INSUFFICIENT STOCK")
-        cursor.execute("UPDATE Products SET ProductStock = ? WHERE ProductPK = ?",(new_stock,id))
-        return "STOCK-OUT REGISTERED"
+        raise ValueError("STOCK-OUT CANNOT BE LOWER THAN/EQUAL TO 0")
+        
     
 def stock_log(cursor,id,amount,type):
     search = cursor.execute("SELECT ProductName FROM Products WHERE ProductPK = ?",(id,))
@@ -220,7 +218,7 @@ def view_stock_log(cursor):
     product_list = []
     for item in fetch:
         id,name,productFK,amount,movimentation_type,date = item
-    product_list.append({"ID":id,"NAME":name,"PRODUCT_ID":productFK,"AMOUNT":amount,"MOVIMENTATION_TYPE":movimentation_type,"OPERATION_DATE":str(date)})
+        product_list.append({"ID":id,"NAME":name,"PRODUCT_ID":productFK,"AMOUNT":amount,"MOVIMENTATION_TYPE":movimentation_type,"OPERATION_DATE":str(date)})
     if len(product_list) == 0:
         raise ValueError("LOG IS EMPTY")
     return product_list
