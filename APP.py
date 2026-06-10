@@ -5,6 +5,7 @@ import pyodbc
 import os
 from dotenv import load_dotenv
 from CRUDFUNCTIONS import create_product,create_category,list_products,list_categories,search_product,update_product,delete_product,delete_category,stock_in,stock_out,stock_log,system_log,view_system_log,view_stock_log
+
 load_dotenv()
 
 def get_connection():
@@ -34,15 +35,32 @@ def product_search_list_and_create():
             except ValueError as err:
                 return jsonify({"ERROR_MESSAGE":str(err)}),404
         else:
-            results = list_products(cursor)
-            system = system_log(cursor,"PRODUCT",None,None,"LIST_PRODUCTS")
-            conn.commit()
+            try:
+                results = list_products(cursor)
+                system = system_log(cursor,"PRODUCT",None,None,"LIST_PRODUCTS")
+                conn.commit()
+            except ValueError as err:
+                return jsonify({"ERROR_MESSAGE":str(err)})
         return jsonify([{"MESSAGE":system},results]),200
     if request.method == "POST":
         data = request.get_json()
+        name = data.get("NAME")
+        category = data.get("CATEGORY")
+        price = data.get("PRICE")
+        stock = data.get("STOCK")
+        if len(data) == 0:
+            return jsonify({"ERROR_MESSAGE":"NO ARGUMENTS GIVEN"})
+        if name is None:
+            return jsonify({"ERROR_MESSAGE":"NAME NOT GIVEN"})
+        if category is None:
+            return jsonify({"ERROR_MESSAGE":"CATEGORY NOT GIVEN"})
+        if price is None:
+            return jsonify({"ERROR_MESSAGE":"PRICE NOT GIVEN"})
+        if stock is None:
+            return jsonify({"ERROR_MESSAGE":"STOCK NOT GIVEN"})
         try:
-            product_creation = create_product(cursor,data["NAME"],data["CATEGORY"],data["PRICE"],data["STOCK"])
-            system = system_log(cursor,"PRODUCT",data["NAME"],product_creation[1]["ID"],"CREATE_PRODUCT")
+            product_creation = create_product(cursor,name,category,price,stock)
+            system = system_log(cursor,"PRODUCT",name,product_creation[1]["ID"],"CREATE_PRODUCT")
             conn.commit()
             return jsonify([{"MESSAGE":product_creation[0]["MESSAGE"]},{"SYSTEM_MESSAGE":system}]),201
         except ValueError as err:
@@ -82,15 +100,21 @@ def category_creation_and_listing():
     conn = get_connection()
     cursor = conn.cursor()
     if request.method == "GET":
-        category_list = list_categories(cursor)
-        system = system_log(cursor,"CATEGORY",None,None,"LIST_CATEGORIES")
-        conn.commit()
-        return jsonify({"SYSTEM_MESSAGE":system},{"CATEGORY_LIST":category_list}),200
-    if request.method == "POST":
         try:
-            data = request.get_json()
-            category_creation = create_category(cursor,data["NAME"])
-            system = system_log(cursor,"CATEGORY",data["NAME"],category_creation[1]["CATEGORY_ID"],"CREATE_CATEGORY")
+            category_list = list_categories(cursor)
+            system = system_log(cursor,"CATEGORY",None,None,"LIST_CATEGORIES")
+            conn.commit()
+            return jsonify({"SYSTEM_MESSAGE":system},{"CATEGORY_LIST":category_list}),200
+        except ValueError as err:
+            return jsonify({"ERROR_MESSAGE":str(err)})
+    if request.method == "POST":
+        data = request.get_json()
+        name = data.get("NAME")
+        if name is None:
+            return jsonify({"ERROR_MESSAGE":"NAME NOT GIVEN"})
+        try:
+            category_creation = create_category(cursor,name)
+            system = system_log(cursor,"CATEGORY",name,category_creation[1]["CATEGORY_ID"],"CREATE_CATEGORY")
             conn.commit()
             return jsonify({"MESSAGE":category_creation[0]["MESSAGE"]},{"SYSTEM_MESSAGE":system}),201
         except ValueError as err:
@@ -116,8 +140,12 @@ def transactions(id):
     cursor = conn.cursor()
     data = request.get_json()
     type = data.get("TRANSACTION")
-    if type == "stock_in":
+    if type is None:
+        return jsonify({"ERROR_MESSAGE":"TRANSACTION TYPE NOT GIVEN"})
+    if type.upper() == "STOCK_IN":
         amount = data.get("AMOUNT")
+        if amount is None:
+            return jsonify({"ERROR_MESSAGE":"AMOUNT NOT GIVEN"})
         try:
             transaction = stock_in(cursor,id,amount)
             log_transaction = stock_log(cursor,id,amount,type)
@@ -125,8 +153,10 @@ def transactions(id):
             return jsonify([{"MESSAGE":transaction},{"MESSAGE":log_transaction}]),200
         except ValueError as err:
             return jsonify({"ERROR_MESSAGE":str(err)}),400
-    if type == "stock_out":
+    if type.upper() == "STOCK_OUT":
         amount = data.get("AMOUNT")
+        if amount is None:
+            return jsonify({"ERROR_MESSAGE":"AMOUNT NOT GIVEN"})
         try:
             transaction = stock_out(cursor,id,amount)
             log_transaction = stock_log(cursor,id,amount,type)
@@ -140,8 +170,8 @@ def logs():
     conn = get_connection()
     cursor = conn.cursor()
     if request.method == "GET":
-        stock_log = view_stock_log(cursor)
-        system_log = view_system_log(cursor)
-        return jsonify([{"STOCK_LOG":stock_log},{"SYSTEM_LOG":system_log}])
+        stck_log = view_stock_log(cursor)
+        sys_log = view_system_log(cursor)
+        return jsonify([{"STOCK_LOG":stck_log},{"SYSTEM_LOG":sys_log}])
 if __name__ == "__main__":
     app.run(debug=True)
