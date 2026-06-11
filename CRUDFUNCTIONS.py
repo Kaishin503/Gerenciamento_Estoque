@@ -190,16 +190,16 @@ def stock_log(cursor,id,amount,type):
     search = cursor.execute("SELECT ProductName FROM Products WHERE ProductPK = ?",(id,))
     fetch = search.fetchone()
     if fetch is None:
-        raise ValueError("ERROR: Product Does Not Exist!")
+        raise ValueError("PRODUCT DOES NOT EXIST")
     product_name = fetch[0]
     cursor.execute("INSERT INTO StockLog (ProductName,ProductFK,Amount,MovimentationType) VALUES (?,?,?,?)",(product_name,id,amount,type))
-    return ("Stock Log Successfully Updated.")
+    return ("STOCK LOG SUCCESSFULLY UPDATED")
         
 def system_log(cursor,entity,entity_name,id,operation_type):
     if entity is None:
-        raise ValueError("ERROR: Entity Must Be Specified!")
+        raise ValueError("ENTITY MUST BE SPECIFIED")
     cursor.execute("INSERT INTO SystemLog (Entity,EntityName,EntityID,OperationType) VALUES (?,?,?,?)",(entity,entity_name,id,operation_type))
-    return ("System Log Successfully Updated.")
+    return ("SYSTEM LOG SUCCESSFULLY UPDATED")
 
 def view_system_log(cursor):
     system_log = cursor.execute("SELECT * FROM SystemLog")
