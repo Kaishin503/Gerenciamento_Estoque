@@ -1,6 +1,6 @@
 
 from flask_cors import CORS
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
 import pyodbc
 import os
 from dotenv import load_dotenv
@@ -20,7 +20,7 @@ def get_connection():
 app = Flask(__name__)
 CORS(app)
 
-
+        
 @app.route("/products",methods=["GET","POST"])
 def product_search_list_and_create():
     conn = get_connection()
@@ -30,7 +30,9 @@ def product_search_list_and_create():
         if id_or_name:
             try:
                 results = search_product(cursor,id_or_name)
-                system = system_log(cursor,"PRODUCT",results["NAME"],results["ID"],"SEARCH_PRODUCT")
+                name = results.get("NAME")
+                id = results.get("ID")
+                system = system_log(cursor,"PRODUCT",name,id,"SEARCH_PRODUCT")
                 conn.commit()
             except ValueError as err:
                 return jsonify({"ERROR_MESSAGE":str(err)}),404
@@ -49,15 +51,15 @@ def product_search_list_and_create():
         price = data.get("PRICE")
         stock = data.get("STOCK")
         if len(data) == 0:
-            return jsonify({"ERROR_MESSAGE":"NO ARGUMENTS GIVEN"})
+            return jsonify({"ERROR_MESSAGE":"NO ARGUMENTS GIVEN"}),400
         if name is None:
-            return jsonify({"ERROR_MESSAGE":"NAME NOT GIVEN"})
+            return jsonify({"ERROR_MESSAGE":"NAME NOT GIVEN"}),400
         if category is None:
-            return jsonify({"ERROR_MESSAGE":"CATEGORY NOT GIVEN"})
+            return jsonify({"ERROR_MESSAGE":"CATEGORY NOT GIVEN"}),400
         if price is None:
-            return jsonify({"ERROR_MESSAGE":"PRICE NOT GIVEN"})
+            return jsonify({"ERROR_MESSAGE":"PRICE NOT GIVEN"}),400
         if stock is None:
-            return jsonify({"ERROR_MESSAGE":"STOCK NOT GIVEN"})
+            return jsonify({"ERROR_MESSAGE":"STOCK NOT GIVEN"}),400
         try:
             product_creation = create_product(cursor,name,category,price,stock)
             system = system_log(cursor,"PRODUCT",name,product_creation[1]["ID"],"CREATE_PRODUCT")
@@ -86,7 +88,9 @@ def product_update_and_delete(id):
             return jsonify({"ERROR_MESSAGE":str(err)}),400
     if request.method == "DELETE":
         try:
-            system = system_log(cursor,"PRODUCT",None,id,"DELETE_PRODUCT")
+            search = cursor.execute("SELECT ProductName FROM Products WHERE ProductPK = ?",(id,))
+            product_name = search.fetchone()
+            system = system_log(cursor,"PRODUCT",product_name[0],id,"DELETE_PRODUCT")
             product_deletion = delete_product(cursor,id)
             conn.commit()
             return jsonify([{"MESSAGE":product_deletion},{"SYSTEM_MESSAGE":system}]),200
@@ -104,9 +108,11 @@ def category_creation_and_listing():
             category_list = list_categories(cursor)
             system = system_log(cursor,"CATEGORY",None,None,"LIST_CATEGORIES")
             conn.commit()
+            cursor.close()
+            conn.close()
             return jsonify({"SYSTEM_MESSAGE":system},{"CATEGORY_LIST":category_list}),200
         except ValueError as err:
-            return jsonify({"ERROR_MESSAGE":str(err)})
+            return jsonify({"ERROR_MESSAGE":str(err)}),400
     if request.method == "POST":
         data = request.get_json()
         name = data.get("NAME")
@@ -116,6 +122,8 @@ def category_creation_and_listing():
             category_creation = create_category(cursor,name)
             system = system_log(cursor,"CATEGORY",name,category_creation[1]["CATEGORY_ID"],"CREATE_CATEGORY")
             conn.commit()
+            cursor.close()
+            conn.close()
             return jsonify({"MESSAGE":category_creation[0]["MESSAGE"]},{"SYSTEM_MESSAGE":system}),201
         except ValueError as err:
             return jsonify({"ERROR_MESSAGE":str(err)}),400
@@ -127,14 +135,19 @@ def category_deletion(id):
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        system = system_log(cursor,"CATEGORY",None,id,"DELETE_CATEGORY")
+        search = cursor.execute("SELECT CategoryName FROM ProductCategory WHERE CategoryPK = ?",(id,))
+        fetch = search.fetchone()
+        category_name = fetch[0]
+        system = system_log(cursor,"CATEGORY",category_name,id,"DELETE_CATEGORY")
         category_deletion = delete_category(cursor,id)
         conn.commit()
+        cursor.close()
+        conn.close()
         return jsonify({"MESSAGE":category_deletion},{"SYSTEM_MESSAGE":system}),200
     except ValueError as err:
         return jsonify({"ERROR_MESSAGE":str(err)}),400
 
-@app.route("/products/<int:id>/transactions",methods=["PUT"]) 
+@app.route("/products/<int:id>/transactions",methods=["POST"]) 
 def transactions(id):
     conn = get_connection()
     cursor = conn.cursor()
@@ -150,6 +163,8 @@ def transactions(id):
             transaction = stock_in(cursor,id,amount)
             log_transaction = stock_log(cursor,id,amount,type)
             conn.commit()
+            cursor.close()
+            conn.close()
             return jsonify([{"MESSAGE":transaction},{"MESSAGE":log_transaction}]),200
         except ValueError as err:
             return jsonify({"ERROR_MESSAGE":str(err)}),400
@@ -161,6 +176,8 @@ def transactions(id):
             transaction = stock_out(cursor,id,amount)
             log_transaction = stock_log(cursor,id,amount,type)
             conn.commit()
+            cursor.close()
+            conn.close()
             return jsonify([{"MESSAGE":transaction},{"MESSAGE":log_transaction}]),200
         except ValueError as err:
             return jsonify({"ERROR_MESSAGE":str(err)}),400
@@ -169,9 +186,12 @@ def transactions(id):
 def logs():
     conn = get_connection()
     cursor = conn.cursor()
+    cursor.close()
+    conn.close()
     if request.method == "GET":
         stck_log = view_stock_log(cursor)
         sys_log = view_system_log(cursor)
-        return jsonify([{"STOCK_LOG":stck_log},{"SYSTEM_LOG":sys_log}])
+        return jsonify([{"STOCK_LOG":stck_log},{"SYSTEM_LOG":sys_log}]),200
+
 if __name__ == "__main__":
     app.run(debug=True)
