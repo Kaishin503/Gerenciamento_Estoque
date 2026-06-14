@@ -1,5 +1,10 @@
 this project is a CRUD project where the main theme is products.
-to run this CRUD, you must first run the file APP.py and then you can make requests. 
+to run this CRUD, you must first create a .env file then put the following parameters:
+DB_SERVER=?
+DB_NAME=?
+i used Microst SQL Server for this project, but you can use any other like PostGRE or MySQL, only the driver changes.
+the DATABASE.txt file contains all commands i used on SQL Server to create the database tables.
+run the file APP.py and then you can make requests. 
 below are the requests and functionalities the program can execute:
 
 /products: GET and POST requests are allowed, where GET allows you to access LIST PRODUCTS and SEARCH PRODUCT and POST is CREATE PRODUCT 
